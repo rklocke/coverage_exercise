@@ -13,3 +13,25 @@ Generate a report that lists any genes that have less than 100% coverage at 30x.
 
 - Ideally using python, write a script that takes the sambamba output and generates a report listing any genes that have less than 100% coverage at 30x
 - This script should be able to be applied to any gene panel
+
+## Usage
+Install the required Python libraries with the `requirements.txt` file:
+```
+pip install -r requirements.txt
+```
+
+Run the tool:
+```
+python find_low_coverage_genes.py \
+-i / --input [str] Path to the Sambamba output file \
+-o / --output (optional) [str] Name of the output report \
+-t / --threshold (optional) [int] Percentage threshold to find genes below at 30x coverage
+```
+
+Example using the example input file in the `example` directory:
+```
+python find_low_coverage_genes.py \
+-i example/NGS148_34_139558_CB_CMCMD_S33_R1_001.sambamba_output.txt \
+-o NGS148_low_coverage_genes.csv \
+-t 98
+```
