@@ -153,6 +153,71 @@ def calculate_gene_30x_coverage(sambamba_df) -> pd.DataFrame:
     return gene_cov_30x_df
 
 
+def get_genes_below_30x_threshold(gene_coverage_df, threshold) -> pd.DataFrame:
+    """
+    Filter and create a dataframe containing any genes below 30x coverage
+
+    Parameters
+    ----------
+    gene_coverage_df : pd.DataFrame
+        pandas df of all genes / transcripts and their coverage at 30x
+    threshold: float
+        the threshold for coverage at 30x to retrieve genes / transcripts
+        below this
+    Returns
+    -------
+    genes_below_100x : pd.DataFrame
+        pandas df with any genes / transcripts with 30x coverage < threshold
+
+    Example output format:
+    +------------+----------------+--------------------+
+    | GeneSymbol | Accession      | AvgGeneCoverage30x |
+    +------------+----------------+--------------------+
+    | MSTO1      | NM_018116.3    | 98.65              |
+    | NEB        | NM_001271208.1 | 90.22              |
+    +------------+----------------+--------------------+
+    """
+    # Extract any genes below 100% at 30x
+    genes_below_100x = gene_coverage_df.loc[
+        gene_coverage_df['AvgGeneCoverage30x'] < float(threshold)
+    ]
+
+    # Round values to 2dp
+    genes_below_100x = genes_below_100x.round(2)
+
+    return genes_below_100x
+
+
+def write_out_report(input_file, genes_below_30x, threshold, outfile_name):
+    """
+    Write out the low coverage genes to a CSV
+
+    Parameters
+    ----------
+    input_file : str
+        path to the input Sambamba file given
+    genes_below_30x : pd.DataFrame
+        pandas df with any genes / transcripts with 30x coverage < threshold
+    threshold: int
+        threshold which was used to find genes below that coverage at 30x
+        e.g. 100
+    outfile_name : str
+        Name of output report
+    """
+    # If output file name not give as command line arg, name output file
+    # after the sample name from the input file
+    # e.g. input of NGS148_34_139558_CB_CMCMD_S33_R1_001.sambamba_output.txt
+    # and threshold of 100 percent would give output name of
+    # NGS148_34_139558_CB_CMCMD_S33_R1_001.gene_coverage_30x_below_100pc.csv
+    if not outfile_name:
+        outfile_name = (
+            f"{Path(input_file).stem.split('.')[0]}.gene_coverage_30x_below"
+            f"_{threshold}pc.csv"
+        )
+
+    genes_below_30x.to_csv(outfile_name, index=False)
+
+
 def main():
     """
     Main function to generate gene 30x coverage report output at threshold
@@ -161,6 +226,10 @@ def main():
     args = parse_args()
     sambamba_df = read_in_sambamba_file(args.input)
     gene_coverage_30x = calculate_gene_30x_coverage(sambamba_df)
+    genes_below_30x = get_genes_below_30x_threshold(
+        gene_coverage_30x, args.threshold
+    )
+    write_out_report(args.input, genes_below_30x, args.threshold, args.output)
 
 if __name__ == '__main__':
     main()
