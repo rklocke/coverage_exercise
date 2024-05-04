@@ -18,7 +18,6 @@ python find_low_coverage_genes.py [-h] \
 import argparse
 import numpy as np
 import pandas as pd
-import sys
 
 from pathlib import Path
 
@@ -176,13 +175,10 @@ def get_genes_below_30x_threshold(gene_coverage_df, threshold) -> pd.DataFrame:
     | NEB        | NM_001271208.1 | 90.22              |
     +------------+----------------+--------------------+
     """
-    # Extract any genes below 100% at 30x
+    # Extract any genes below 100% at 30x and round values to 2dp
     genes_below_100x = gene_coverage_df.loc[
         gene_coverage_df['AvgGeneCoverage30x'] < float(threshold)
-    ]
-
-    # Round values to 2dp
-    genes_below_100x = genes_below_100x.round(2)
+    ].round(2)
 
     return genes_below_100x
 
