@@ -93,7 +93,7 @@ def read_in_sambamba_file(input_file) -> pd.DataFrame:
     # Remove any full duplicate rows
     sambamba_df.drop_duplicates(keep='first', inplace=True)
 
-    # Subset to useful columns
+    # Subset to useful columns; if required columns not found raise KeyError
     try:
         sambamba_subset = sambamba_df[[
             '#chromosome', 'StartPosition', 'EndPosition', 'GeneSymbol;Accession', 'percentage30'
@@ -104,7 +104,7 @@ def read_in_sambamba_file(input_file) -> pd.DataFrame:
             "GeneSymbol;Accession, percentage30. Please check input file"
         )
 
-    # Split out GeneSymbol;Accession column into two columns
+    # Split out GeneSymbol;Accession column into two separate columns
     sambamba_subset[['GeneSymbol', 'Accession']] = sambamba_subset[
         'GeneSymbol;Accession'
     ].str.split(';', expand=True)
@@ -114,7 +114,7 @@ def read_in_sambamba_file(input_file) -> pd.DataFrame:
 
 def calculate_gene_30x_coverage(sambamba_df) -> pd.DataFrame:
     """
-    Calculate the coverage of each gene at 30x based on exon 30x coverage
+    Calculate the coverage of each gene at 30x based on exon 30x % coverage
 
     Parameters
     ----------
@@ -141,9 +141,10 @@ def calculate_gene_30x_coverage(sambamba_df) -> pd.DataFrame:
         sambamba_df['EndPosition'] - sambamba_df['StartPosition']
     )
 
-    # Calculate fraction of gene each exon covers wrt all exon lengths summed
-    # multiply each exon's gene fraction by the percentage30 column
-    # then average this over the gene
+    # This calculates gene converage at 30x by:
+    # calculating fraction of gene each exon covers wrt all tx exon lengths
+    # then multiplies each exon's gene fraction by its percentage30 value
+    # then averages the result of this over all of the gene's exons
     gene_cov_30x_df = sambamba_df.groupby(['GeneSymbol', 'Accession']).apply(
         lambda row: np.average(row['percentage30'], weights=row['ExonLength'])
     ).to_frame('AvgGeneCoverage30x').reset_index()
@@ -210,12 +211,13 @@ def write_out_report(input_file, genes_below_30x, threshold, outfile_name):
             f"_{threshold}pc.csv"
         )
 
+    # Write out to CSV, without index
     genes_below_30x.to_csv(outfile_name, index=False)
 
 
 def main():
     """
-    Main function to generate gene 30x coverage report output at threshold
+    Main function to generate gene 30x coverage CSV report output at threshold
     given
     """
     args = parse_args()
