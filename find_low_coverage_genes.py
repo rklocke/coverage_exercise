@@ -8,10 +8,11 @@ Script to parse the output from Sambamba and return genes which are below 30x
 coverage.
 
 Usage:
-python find_low_coverage_genes.py [-h]
--i <sambamba_file.txt> \
-[-o <name_of_output_file.csv>] \
-[-t <100>]
+python find_low_coverage_genes.py [-h] \
+-i / --input [str] Path to the Sambamba output file \
+-o / --output (optional) [str] Name of the output report \
+-t / --threshold (optional) [int] Percentage threshold to find genes below at
+30x coverage
 """
 
 import argparse
@@ -99,12 +100,10 @@ def read_in_sambamba_file(input_file) -> pd.DataFrame:
             '#chromosome', 'StartPosition', 'EndPosition', 'GeneSymbol;Accession', 'percentage30'
         ]]
     except KeyError:
-        print(
+        raise KeyError(
             "Expecting columns #chromosome, StartPosition, EndPosition, "
-            "GeneSymbol;Accession, percentage30. Please check input file "
-            "has these columns"
+            "GeneSymbol;Accession, percentage30. Please check input file"
         )
-        sys.exit(1)
 
     # Split out GeneSymbol;Accession column into two columns
     sambamba_subset[['GeneSymbol', 'Accession']] = sambamba_subset[
