@@ -7,6 +7,7 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.realpath(__file__), '../../')
 ))
 
+from pandas.testing import assert_frame_equal
 from tests import TEST_DATA_DIR
 import find_low_coverage_genes as flcg
 
@@ -34,6 +35,36 @@ class TestReadInFile():
             flcg.read_in_sambamba_file(self.bad_format)
 
 
+class TestCalculateCoverage():
+    """
+    Functions for testing calculating coverage
+    """
+    # Make example df with %30coverage for two exons for one gene to test with
+    example_df = pd.DataFrame.from_dict({
+        '#chromosome': [1, 1],
+        'StartPosition': [154140402, 154141770],
+        'EndPosition': [154140426, 154141869],
+        'GeneSymbol': ['TPM3', 'TPM3'],
+        'Accession': ['NM_152263.3', 'NM_152263.3'],
+        'percentage30': [100, 83.0189]
+    })
+
+    def test_calculate_gene_30x_coverage(self):
+        """
+        Check that gene coverage is calculated as expected
+        """
+        gene_coverage_df = flcg.calculate_gene_30x_coverage(self.example_df)
+
+        assert_frame_equal(
+            gene_coverage_df,
+            pd.DataFrame.from_dict({
+                'GeneSymbol': ['TPM3'],
+                'Accession': ['NM_152263.3'],
+                'AvgGeneCoverage30x': [86.332285]
+            })
+        )
+
+
 class TestFilterLowCoverage():
     """
     Functions for testing getting low coverage genes and thresholds used
@@ -52,11 +83,12 @@ class TestFilterLowCoverage():
         below_100pc_at_30x = flcg.get_genes_below_30x_threshold(
             self.example_df, 100
         )
-        below_100pc_at_30x.equals(
+        assert_frame_equal(
+            below_100pc_at_30x,
             pd.DataFrame.from_dict({
                 'GeneSymbol': ['GENE2', 'GENE3', 'GENE4'],
                 'Accession': ['NM12246.1', 'NM17596.1', 'NM2345.1'],
-                'AvgGeneCoverage30x': [98.65, 92.14, 96.44]
+                'AvgGeneCoverage30x': [98.65, 92.14, 96.45]
             })
         )
 
@@ -67,11 +99,12 @@ class TestFilterLowCoverage():
         below_98pc_at_30x = flcg.get_genes_below_30x_threshold(
             self.example_df, 98
         )
-        below_98pc_at_30x.equals(
+        assert_frame_equal(
+            below_98pc_at_30x,
             pd.DataFrame.from_dict({
                 'GeneSymbol': ['GENE3', 'GENE4'],
                 'Accession': ['NM17596.1', 'NM2345.1'],
-                'AvgGeneCoverage30x': [92.14, 96.44]
+                'AvgGeneCoverage30x': [92.14, 96.45]
             })
         )
 
@@ -82,7 +115,8 @@ class TestFilterLowCoverage():
         below_96pc_at_30x = flcg.get_genes_below_30x_threshold(
             self.example_df, 96
         )
-        below_96pc_at_30x.equals(
+        assert_frame_equal(
+            below_96pc_at_30x,
             pd.DataFrame.from_dict({
                 'GeneSymbol': ['GENE3'],
                 'Accession': ['NM17596.1'],

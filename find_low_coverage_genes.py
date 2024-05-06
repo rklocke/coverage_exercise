@@ -179,7 +179,7 @@ def get_genes_below_30x_threshold(gene_coverage_df, threshold) -> pd.DataFrame:
     # Extract any genes below 100% at 30x and round values to 2dp
     genes_below_100x = gene_coverage_df.loc[
         gene_coverage_df['AvgGeneCoverage30x'] < float(threshold)
-    ].round(2)
+    ].round(2).reset_index(drop=True)
 
     return genes_below_100x
 
